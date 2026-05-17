@@ -4,7 +4,6 @@ import SwiftUI
 struct MatchRowView: View {
     let match: EspansoMatch
     let isSelected: Bool
-    let shortcut: Int?
     let onSelect: () -> Void
 
     @State private var isHovered = false
@@ -34,12 +33,6 @@ struct MatchRowView: View {
                 }
 
                 Spacer(minLength: 8)
-
-                if let shortcut, shortcut <= 9 {
-                    Text("⌘\(shortcut)")
-                        .font(.caption.monospaced())
-                        .foregroundStyle(.tertiary)
-                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
