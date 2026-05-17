@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read pinned versions from Mintfile
+        id: versions
+        run: |
+          echo "swiftlint=$(grep '^realm/SwiftLint@' Mintfile | cut -d@ -f2)" >> "$GITHUB_OUTPUT"
+          echo "swiftformat=$(grep '^nicklockwood/SwiftFormat@' Mintfile | cut -d@ -f2)" >> "$GITHUB_OUTPUT"
+
+      - name: Install SwiftLint
+        env:
+          VERSION: ${{ steps.versions.outputs.swiftlint }}
+        run: |
+          curl -sL "https://github.com/realm/SwiftLint/releases/download/$VERSION/portable_swiftlint.zip" -o swiftlint.zip
+          unzip -q swiftlint.zip -d swiftlint
+          sudo mv swiftlint/swiftlint /usr/local/bin/
+
+      - name: Install SwiftFormat
+        env:
+          VERSION: ${{ steps.versions.outputs.swiftformat }}
+        run: |
+          curl -sL "https://github.com/nicklockwood/SwiftFormat/releases/download/$VERSION/swiftformat.zip" -o swiftformat.zip
+          unzip -q swiftformat.zip
+          sudo mv swiftformat /usr/local/bin/
+
+      - name: Run SwiftLint
+        run: swiftlint
+
+      - name: Run SwiftFormat
+        run: swiftformat . --lint
+
+  build:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version && xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Build
+        run: xcodebuild -scheme EspansoUI -configuration Debug build
+
+      - name: Test
+        run: xcodebuild -scheme EspansoUI -configuration Debug -destination 'platform=macOS' test
