@@ -8,6 +8,7 @@ final class AppState: ObservableObject {
     @Published private(set) var matches: [EspansoMatch] = []
     @Published private(set) var lastError: String?
     @Published var searchText: String = ""
+    @Published var filter: MatchFilter = .all
     @Published var isMenuPresented: Bool = false
 
     private let loader: EspansoLoader
@@ -23,8 +24,9 @@ final class AppState: ObservableObject {
 
     var filteredMatches: [EspansoMatch] {
         let query = searchText.trimmingCharacters(in: .whitespaces).lowercased()
-        guard !query.isEmpty else { return matches }
         return matches.filter { match in
+            guard filter.includes(match) else { return false }
+            guard !query.isEmpty else { return true }
             if match.triggers.contains(where: { $0.lowercased().contains(query) }) { return true }
             if match.replace.lowercased().contains(query) { return true }
             if let label = match.label, label.lowercased().contains(query) { return true }
