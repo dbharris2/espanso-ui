@@ -82,11 +82,10 @@ struct MatchListView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 2) {
-                        ForEach(Array(appState.filteredMatches.enumerated()), id: \.element.id) { index, match in
+                        ForEach(appState.filteredMatches) { match in
                             MatchRowView(
                                 match: match,
                                 isSelected: match.id == selectedID,
-                                shortcut: index < 9 ? index + 1 : nil,
                                 onSelect: { activate(match) }
                             )
                             .id(match.id)

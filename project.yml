@@ -16,9 +16,6 @@ packages:
   Yams:
     url: https://github.com/jpsim/Yams
     from: 5.1.0
-  KeyboardShortcuts:
-    url: https://github.com/sindresorhus/KeyboardShortcuts
-    from: 2.0.0
   MenuBarExtraAccess:
     url: https://github.com/orchetect/MenuBarExtraAccess
     exactVersion: 1.2.2
@@ -45,7 +42,6 @@ targets:
         com.apple.security.app-sandbox: false
     dependencies:
       - package: Yams
-      - package: KeyboardShortcuts
       - package: MenuBarExtraAccess
     scheme:
       testTargets:
