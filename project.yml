@@ -1,0 +1,78 @@
+name: EspansoUI
+options:
+  bundleIdPrefix: com.espansoui
+  deploymentTarget:
+    macOS: "14.0"
+  developmentLanguage: en
+
+settings:
+  MARKETING_VERSION: "0.1.0"
+  CURRENT_PROJECT_VERSION: 1
+  SWIFT_VERSION: "6.2"
+  SWIFT_STRICT_CONCURRENCY: complete
+  ENABLE_USER_SCRIPT_SANDBOXING: false
+
+packages:
+  Yams:
+    url: https://github.com/jpsim/Yams
+    from: 5.1.0
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 2.0.0
+  MenuBarExtraAccess:
+    url: https://github.com/orchetect/MenuBarExtraAccess
+    exactVersion: 1.2.2
+
+targets:
+  EspansoUI:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/EspansoUI
+      - path: Resources/Assets.xcassets
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.espansoui.app
+      INFOPLIST_FILE: Resources/Info.plist
+      CODE_SIGN_ENTITLEMENTS: Resources/EspansoUI.entitlements
+      ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      ENABLE_HARDENED_RUNTIME: true
+      CODE_SIGN_IDENTITY: "-"
+    entitlements:
+      path: Resources/EspansoUI.entitlements
+      properties:
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-only: true
+        com.apple.security.app-sandbox: false
+    dependencies:
+      - package: Yams
+      - package: KeyboardShortcuts
+      - package: MenuBarExtraAccess
+    scheme:
+      testTargets:
+        - EspansoUITests
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftlint &> /dev/null; then
+            swiftlint --fix && swiftlint
+          else
+            echo "warning: SwiftLint not installed, install via 'brew install swiftlint'"
+          fi
+      - name: SwiftFormat
+        basedOnDependencyAnalysis: false
+        script: |
+          if command -v swiftformat &> /dev/null; then
+            swiftformat . --lint
+          else
+            echo "warning: SwiftFormat not installed, install via 'brew install swiftformat'"
+          fi
+  EspansoUITests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/EspansoUITests
+    settings:
+      GENERATE_INFOPLIST_FILE: true
+    dependencies:
+      - target: EspansoUI
