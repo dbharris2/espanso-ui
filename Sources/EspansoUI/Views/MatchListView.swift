@@ -12,6 +12,10 @@ struct MatchListView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 6)
 
+            filterPicker
+                .padding(.horizontal, 10)
+                .padding(.bottom, 6)
+
             Divider()
 
             content
@@ -21,6 +25,9 @@ struct MatchListView: View {
         }
         .frame(width: 420, height: 520)
         .onChange(of: appState.searchText) { _, _ in
+            selectedID = appState.filteredMatches.first?.id
+        }
+        .onChange(of: appState.filter) { _, _ in
             selectedID = appState.filteredMatches.first?.id
         }
         .onChange(of: appState.matches) { _, _ in
@@ -52,6 +59,16 @@ struct MatchListView: View {
         .background(RoundedRectangle(cornerRadius: 6).fill(Color.secondary.opacity(0.1)))
     }
 
+    private var filterPicker: some View {
+        Picker("Filter", selection: $appState.filter) {
+            ForEach(MatchFilter.allCases) { filter in
+                Text(filter.title).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+    }
+
     @ViewBuilder
     private var content: some View {
         if let error = appState.lastError {
@@ -81,18 +98,26 @@ struct MatchListView: View {
         } else {
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 2) {
-                        ForEach(appState.filteredMatches) { match in
-                            MatchRowView(
-                                match: match,
-                                isSelected: match.id == selectedID,
-                                onSelect: { activate(match) }
-                            )
-                            .id(match.id)
-                            .onTapGesture { selectedID = match.id }
+                    if appState.filter == .images {
+                        MatchGridView(
+                            matches: appState.filteredMatches,
+                            selectedID: selectedID,
+                            onSelect: { activate($0) }
+                        )
+                    } else {
+                        LazyVStack(alignment: .leading, spacing: 2) {
+                            ForEach(appState.filteredMatches) { match in
+                                MatchRowView(
+                                    match: match,
+                                    isSelected: match.id == selectedID,
+                                    onSelect: { activate(match) }
+                                )
+                                .id(match.id)
+                                .onTapGesture { selectedID = match.id }
+                            }
                         }
+                        .padding(6)
                     }
-                    .padding(6)
                 }
                 .onChange(of: selectedID) { _, newValue in
                     guard let newValue else { return }
