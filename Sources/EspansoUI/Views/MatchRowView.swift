@@ -50,18 +50,7 @@ struct MatchRowView: View {
     @ViewBuilder
     private var preview: some View {
         if let url = match.imageURL {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case let .success(image):
-                    image.resizable().scaledToFill()
-                case .failure:
-                    placeholder(systemImage: "photo")
-                case .empty:
-                    placeholder(systemImage: "photo")
-                @unknown default:
-                    placeholder(systemImage: "photo")
-                }
-            }
+            RemoteImage(url: url) { placeholder(systemImage: "photo") }
         } else {
             placeholder(systemImage: "text.alignleft")
         }
