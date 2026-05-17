@@ -11,7 +11,7 @@ struct RemoteImage<Placeholder: View>: View {
     var body: some View {
         Group {
             if let image {
-                Image(nsImage: image).resizable().scaledToFill()
+                AnimatedImageView(image: image)
             } else {
                 placeholder()
             }
@@ -44,6 +44,31 @@ struct RemoteImage<Placeholder: View>: View {
         } catch {
             didFail = true
         }
+    }
+}
+
+private struct AnimatedImageView: NSViewRepresentable {
+    let image: NSImage
+
+    func makeNSView(context: Context) -> NSImageView {
+        let view = NSImageView()
+        view.imageScaling = .scaleProportionallyUpOrDown
+        view.animates = true
+        view.isEditable = false
+        view.allowsCutCopyPaste = false
+        view.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        view.setContentHuggingPriority(.defaultLow, for: .vertical)
+        view.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        view.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        view.image = image
+        return view
+    }
+
+    func updateNSView(_ nsView: NSImageView, context: Context) {
+        if nsView.image !== image {
+            nsView.image = image
+        }
+        nsView.animates = true
     }
 }
 
