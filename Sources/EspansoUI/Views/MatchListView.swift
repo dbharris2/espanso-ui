@@ -31,7 +31,9 @@ struct MatchListView: View {
             selectedID = appState.filteredMatches.first?.id
         }
         .onChange(of: appState.matches) { _, _ in
-            if let current = selectedID, appState.filteredMatches.contains(where: { $0.id == current }) { return }
+            if let current = selectedID, appState.filteredMatches.contains(where: { $0.id == current }) {
+                return
+            }
             selectedID = appState.filteredMatches.first?.id
         }
         .onAppear {
@@ -151,7 +153,8 @@ struct MatchListView: View {
 
     private func activateSelection() {
         guard let id = selectedID,
-              let match = appState.filteredMatches.first(where: { $0.id == id }) else {
+              let match = appState.filteredMatches.first(where: { $0.id == id })
+        else {
             if let first = appState.filteredMatches.first { activate(first) }
             return
         }

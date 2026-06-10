@@ -26,15 +26,18 @@ struct EspansoMatch: Identifiable, Hashable {
 
     static func extractImageURL(from replace: String, relativeTo baseDir: URL) -> URL? {
         let trimmed = replace.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let regex = try? NSRegularExpression(
-            pattern: #"^<img\s+[^>]*src=["']([^"']+)["'][^>]*/?>$"#,
-            options: [.caseInsensitive]
-        ) else { return nil }
+        guard
+            let regex = try? NSRegularExpression(
+                pattern: #"^<img\s+[^>]*src=["']([^"']+)["'][^>]*/?>$"#,
+                options: [.caseInsensitive]
+            )
+        else { return nil }
 
         let range = NSRange(trimmed.startIndex..., in: trimmed)
         guard let match = regex.firstMatch(in: trimmed, options: [], range: range),
               match.numberOfRanges >= 2,
-              let srcRange = Range(match.range(at: 1), in: trimmed) else {
+              let srcRange = Range(match.range(at: 1), in: trimmed)
+        else {
             return nil
         }
         let src = String(trimmed[srcRange])
