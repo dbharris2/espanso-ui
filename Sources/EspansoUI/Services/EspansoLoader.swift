@@ -14,7 +14,9 @@ struct EspansoLoader {
 
     static var defaultConfigDirectory: URL {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        return home.appending(path: ".config/espanso", directoryHint: .isDirectory)
+        return home.appending(
+            path: "./Library/Application Support/espanso", directoryHint: .isDirectory
+        )
     }
 
     var matchDirectory: URL {
@@ -37,7 +39,8 @@ struct EspansoLoader {
 
     func parseFile(_ url: URL) -> [EspansoMatch] {
         guard let data = try? Data(contentsOf: url),
-              let text = String(data: data, encoding: .utf8) else {
+              let text = String(data: data, encoding: .utf8)
+        else {
             return []
         }
         return parse(yaml: text, sourceFile: url)
@@ -45,7 +48,8 @@ struct EspansoLoader {
 
     func parse(yaml text: String, sourceFile: URL) -> [EspansoMatch] {
         guard let root = try? Yams.load(yaml: text) as? [String: Any],
-              let raw = root["matches"] as? [[String: Any]] else {
+              let raw = root["matches"] as? [[String: Any]]
+        else {
             return []
         }
 
@@ -106,11 +110,13 @@ struct EspansoLoader {
     private func yamlFiles(under directory: URL) throws -> [URL] {
         let fm = FileManager.default
         let keys: [URLResourceKey] = [.isRegularFileKey]
-        guard let enumerator = fm.enumerator(
-            at: directory,
-            includingPropertiesForKeys: keys,
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = fm.enumerator(
+                at: directory,
+                includingPropertiesForKeys: keys,
+                options: [.skipsHiddenFiles]
+            )
+        else {
             return []
         }
 

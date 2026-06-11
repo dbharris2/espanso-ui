@@ -75,11 +75,13 @@ final class ConfigWatcher: @unchecked Sendable {
 
     private func enumerateSubdirectories(_ root: URL) -> [URL] {
         let fm = FileManager.default
-        guard let enumerator = fm.enumerator(
-            at: root,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) else {
+        guard
+            let enumerator = fm.enumerator(
+                at: root,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+        else {
             return []
         }
         var results: [URL] = []

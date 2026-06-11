@@ -19,13 +19,16 @@ final class EspansoLoaderTests: XCTestCase {
     }
 
     func testLoadsPlainTriggerReplace() throws {
-        try write(file: "base.yml", contents: """
-        matches:
-          - trigger: ":email"
-            replace: "devon@example.com"
-          - trigger: ":me"
-            replace: "Devon"
-        """)
+        try write(
+            file: "base.yml",
+            contents: """
+            matches:
+              - trigger: ":email"
+                replace: "devon@example.com"
+              - trigger: ":me"
+                replace: "Devon"
+            """
+        )
         let matches = try EspansoLoader(configDirectory: tempDir).load()
         XCTAssertEqual(matches.count, 2)
         XCTAssertEqual(matches[0].triggers, [":email"])
@@ -34,22 +37,28 @@ final class EspansoLoaderTests: XCTestCase {
     }
 
     func testSupportsMultipleTriggers() throws {
-        try write(file: "base.yml", contents: """
-        matches:
-          - triggers: [":hi", ":hello"]
-            replace: "hello there"
-        """)
+        try write(
+            file: "base.yml",
+            contents: """
+            matches:
+              - triggers: [":hi", ":hello"]
+                replace: "hello there"
+            """
+        )
         let matches = try EspansoLoader(configDirectory: tempDir).load()
         XCTAssertEqual(matches.count, 1)
         XCTAssertEqual(matches[0].triggers, [":hi", ":hello"])
     }
 
     func testDetectsImageReplace() throws {
-        try write(file: "gifs.yml", contents: """
-        matches:
-          - trigger: ":cat"
-            replace: '<img src="https://example.com/cat.gif"/>'
-        """)
+        try write(
+            file: "gifs.yml",
+            contents: """
+            matches:
+              - trigger: ":cat"
+                replace: '<img src="https://example.com/cat.gif"/>'
+            """
+        )
         let matches = try EspansoLoader(configDirectory: tempDir).load()
         XCTAssertEqual(matches.count, 1)
         XCTAssertTrue(matches[0].isImage)
@@ -57,22 +66,28 @@ final class EspansoLoaderTests: XCTestCase {
     }
 
     func testImagePathFieldBecomesImage() throws {
-        try write(file: "img.yml", contents: """
-        matches:
-          - trigger: ":logo"
-            image_path: "/tmp/logo.png"
-        """)
+        try write(
+            file: "img.yml",
+            contents: """
+            matches:
+              - trigger: ":logo"
+                image_path: "/tmp/logo.png"
+            """
+        )
         let matches = try EspansoLoader(configDirectory: tempDir).load()
         XCTAssertEqual(matches.count, 1)
         XCTAssertTrue(matches[0].isImage)
     }
 
     func testSkipsEntriesWithoutTriggerOrReplace() throws {
-        try write(file: "base.yml", contents: """
-        matches:
-          - replace: "no trigger"
-          - trigger: ":nothing"
-        """)
+        try write(
+            file: "base.yml",
+            contents: """
+            matches:
+              - replace: "no trigger"
+              - trigger: ":nothing"
+            """
+        )
         let matches = try EspansoLoader(configDirectory: tempDir).load()
         XCTAssertEqual(matches.count, 0)
     }
@@ -80,11 +95,14 @@ final class EspansoLoaderTests: XCTestCase {
     func testRecursesIntoSubdirectories() throws {
         let nested = matchDir.appendingPathComponent("packages/work")
         try FileManager.default.createDirectory(at: nested, withIntermediateDirectories: true)
-        try write(file: "base.yml", contents: """
-        matches:
-          - trigger: ":a"
-            replace: "A"
-        """)
+        try write(
+            file: "base.yml",
+            contents: """
+            matches:
+              - trigger: ":a"
+                replace: "A"
+            """
+        )
         let nestedYaml = nested.appendingPathComponent("snippets.yml")
         try """
         matches:
