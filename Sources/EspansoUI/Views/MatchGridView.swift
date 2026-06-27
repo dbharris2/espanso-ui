@@ -3,6 +3,7 @@ import SwiftUI
 struct MatchGridView: View {
     let matches: [EspansoMatch]
     let selectedID: EspansoMatch.ID?
+    let isActive: Bool
     let onSelect: (EspansoMatch) -> Void
 
     private let columns = [GridItem(.adaptive(minimum: 96), spacing: 8)]
@@ -13,6 +14,7 @@ struct MatchGridView: View {
                 MatchGridCell(
                     match: match,
                     isSelected: match.id == selectedID,
+                    isActive: isActive,
                     onSelect: { onSelect(match) }
                 )
                 .id(match.id)
@@ -25,6 +27,7 @@ struct MatchGridView: View {
 private struct MatchGridCell: View {
     let match: EspansoMatch
     let isSelected: Bool
+    let isActive: Bool
     let onSelect: () -> Void
 
     @State private var isHovered = false
@@ -65,7 +68,7 @@ private struct MatchGridCell: View {
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 if let url = match.imageURL {
-                    RemoteImage(url: url) {
+                    RemoteImage(url: url, isActive: isActive) {
                         Image(systemName: "photo").foregroundStyle(.secondary)
                     }
                 } else {

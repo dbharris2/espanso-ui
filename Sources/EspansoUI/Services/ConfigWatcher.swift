@@ -8,8 +8,8 @@ final class ConfigWatcher: @unchecked Sendable {
 
     // All mutable state below is only touched on `queue`.
     private var sources: [DispatchSourceFileSystemObject] = []
-    private var descriptors: [Int32] = []
     private var pendingWork: DispatchWorkItem?
+    private var isRunning = false
 
     init(
         directory: URL,
@@ -22,20 +22,29 @@ final class ConfigWatcher: @unchecked Sendable {
     }
 
     deinit {
+        pendingWork?.cancel()
         sources.forEach { $0.cancel() }
-        descriptors.forEach { close($0) }
     }
 
     func start() {
-        queue.async { [weak self] in self?.rebuildWatches() }
+        queue.async { [weak self] in
+            guard let self, !self.isRunning else { return }
+            self.isRunning = true
+            self.rebuildWatches()
+        }
     }
 
     func stop() {
-        queue.async { [weak self] in self?.teardown() }
+        queue.async { [weak self] in
+            guard let self, self.isRunning else { return }
+            self.isRunning = false
+            self.teardown()
+        }
     }
 
     private func rebuildWatches() {
         teardown()
+        guard isRunning else { return }
         watch(directory)
         let matchDir = directory.appending(path: "match", directoryHint: .isDirectory)
         if FileManager.default.fileExists(atPath: matchDir.path) {
@@ -47,18 +56,15 @@ final class ConfigWatcher: @unchecked Sendable {
     }
 
     private func teardown() {
-        sources.forEach { $0.cancel() }
-        sources.removeAll()
-        descriptors.forEach { close($0) }
-        descriptors.removeAll()
         pendingWork?.cancel()
         pendingWork = nil
+        sources.forEach { $0.cancel() }
+        sources.removeAll()
     }
 
     private func watch(_ url: URL) {
         let fd = open(url.path, O_EVTONLY)
         guard fd >= 0 else { return }
-        descriptors.append(fd)
 
         let source = DispatchSource.makeFileSystemObjectSource(
             fileDescriptor: fd,
@@ -95,9 +101,11 @@ final class ConfigWatcher: @unchecked Sendable {
     }
 
     private func scheduleNotification() {
+        guard isRunning else { return }
         pendingWork?.cancel()
         let onChange = onChange
         let work = DispatchWorkItem { [weak self] in
+            guard self?.isRunning == true else { return }
             onChange()
             self?.rebuildWatches()
         }

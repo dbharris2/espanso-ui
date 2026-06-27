@@ -24,6 +24,8 @@ struct EspansoLoader {
     }
 
     func load() throws -> [EspansoMatch] {
+        try Task.checkCancellation()
+
         let fm = FileManager.default
         guard fm.fileExists(atPath: matchDirectory.path) else {
             throw EspansoLoaderError.configDirectoryMissing(matchDirectory)
@@ -32,6 +34,7 @@ struct EspansoLoader {
         let files = try yamlFiles(under: matchDirectory)
         var results: [EspansoMatch] = []
         for file in files {
+            try Task.checkCancellation()
             results.append(contentsOf: parseFile(file))
         }
         return results

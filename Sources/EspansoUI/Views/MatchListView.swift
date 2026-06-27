@@ -104,6 +104,7 @@ struct MatchListView: View {
                         MatchGridView(
                             matches: appState.filteredMatches,
                             selectedID: selectedID,
+                            isActive: appState.isMenuPresented,
                             onSelect: { activate($0) }
                         )
                     } else {
@@ -112,6 +113,7 @@ struct MatchListView: View {
                                 MatchRowView(
                                     match: match,
                                     isSelected: match.id == selectedID,
+                                    isActive: appState.isMenuPresented,
                                     onSelect: { activate(match) }
                                 )
                                 .id(match.id)

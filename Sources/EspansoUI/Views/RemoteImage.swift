@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RemoteImage<Placeholder: View>: View {
     let url: URL
+    let isActive: Bool
     @ViewBuilder let placeholder: () -> Placeholder
 
     @State private var image: NSImage?
@@ -11,12 +12,13 @@ struct RemoteImage<Placeholder: View>: View {
     var body: some View {
         Group {
             if let image {
-                AnimatedImageView(image: image)
+                AnimatedImageView(image: image, isAnimating: isActive)
             } else {
                 placeholder()
             }
         }
-        .task(id: url) {
+        .task(id: LoadID(url: url, isActive: isActive)) {
+            guard isActive else { return }
             await load()
         }
     }
@@ -47,13 +49,19 @@ struct RemoteImage<Placeholder: View>: View {
     }
 }
 
+private struct LoadID: Hashable {
+    let url: URL
+    let isActive: Bool
+}
+
 private struct AnimatedImageView: NSViewRepresentable {
     let image: NSImage
+    let isAnimating: Bool
 
     func makeNSView(context: Context) -> NSImageView {
         let view = NSImageView()
         view.imageScaling = .scaleProportionallyUpOrDown
-        view.animates = true
+        view.animates = isAnimating
         view.isEditable = false
         view.allowsCutCopyPaste = false
         view.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -68,7 +76,7 @@ private struct AnimatedImageView: NSViewRepresentable {
         if nsView.image !== image {
             nsView.image = image
         }
-        nsView.animates = true
+        nsView.animates = isAnimating
     }
 }
 
