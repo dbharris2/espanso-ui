@@ -4,6 +4,7 @@ import SwiftUI
 struct MatchRowView: View {
     let match: EspansoMatch
     let isSelected: Bool
+    let isActive: Bool
     let onSelect: () -> Void
 
     @State private var isHovered = false
@@ -50,7 +51,7 @@ struct MatchRowView: View {
     @ViewBuilder
     private var preview: some View {
         if let url = match.imageURL {
-            RemoteImage(url: url) { placeholder(systemImage: "photo") }
+            RemoteImage(url: url, isActive: isActive) { placeholder(systemImage: "photo") }
         } else {
             placeholder(systemImage: "text.alignleft")
         }

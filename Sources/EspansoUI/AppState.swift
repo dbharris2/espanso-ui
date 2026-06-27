@@ -9,10 +9,17 @@ final class AppState: ObservableObject {
     @Published private(set) var lastError: String?
     @Published var searchText: String = ""
     @Published var filter: MatchFilter = .all
-    @Published var isMenuPresented: Bool = false
+    @Published var isMenuPresented: Bool = false {
+        didSet {
+            guard isMenuPresented != oldValue else { return }
+            handleMenuPresentationChange()
+        }
+    }
 
     private let loader: EspansoLoader
+    private let shouldWatchConfig: Bool
     private var watcher: ConfigWatcher?
+    private var reloadTask: Task<Void, Never>?
 
     var configDirectory: URL {
         loader.configDirectory
@@ -36,22 +43,22 @@ final class AppState: ObservableObject {
 
     init(loader: EspansoLoader = EspansoLoader(), startWatcher: Bool = true) {
         self.loader = loader
-        reload()
-        guard startWatcher else { return }
-        let watcher = ConfigWatcher(directory: loader.configDirectory) { [weak self] in
-            Task { @MainActor in self?.reload() }
+        shouldWatchConfig = startWatcher
+        if !startWatcher {
+            reload()
         }
-        self.watcher = watcher
-        watcher.start()
     }
 
     func reload() {
-        do {
-            matches = try loader.load()
-            lastError = nil
-        } catch {
-            matches = []
-            lastError = (error as? EspansoLoaderError).map(describe) ?? error.localizedDescription
+        reloadTask?.cancel()
+
+        let loader = loader
+        reloadTask = Task.detached(priority: .utility) { [loader, weak self] in
+            let result = AppState.loadMatches(with: loader)
+
+            guard !Task.isCancelled else { return }
+
+            await self?.applyReloadResult(result)
         }
     }
 
@@ -66,10 +73,60 @@ final class AppState: ObservableObject {
         NSWorkspace.shared.open(configDirectory)
     }
 
-    private func describe(_ error: EspansoLoaderError) -> String {
+    private func handleMenuPresentationChange() {
+        guard shouldWatchConfig else { return }
+
+        if isMenuPresented {
+            reload()
+            startWatcherIfNeeded()
+        } else {
+            reloadTask?.cancel()
+            watcher?.stop()
+        }
+    }
+
+    private func startWatcherIfNeeded() {
+        if watcher == nil {
+            watcher = ConfigWatcher(directory: loader.configDirectory) { [weak self] in
+                Task { @MainActor in
+                    guard self?.isMenuPresented == true else { return }
+                    self?.reload()
+                }
+            }
+        }
+        watcher?.start()
+    }
+
+    private nonisolated static func loadMatches(with loader: EspansoLoader) -> ReloadResult {
+        do {
+            return try .success(loader.load())
+        } catch let error as EspansoLoaderError {
+            return .failure(describe(error))
+        } catch {
+            return .failure(error.localizedDescription)
+        }
+    }
+
+    private func applyReloadResult(_ result: ReloadResult) {
+        switch result {
+        case let .success(matches):
+            self.matches = matches
+            lastError = nil
+        case let .failure(message):
+            matches = []
+            lastError = message
+        }
+    }
+
+    private nonisolated static func describe(_ error: EspansoLoaderError) -> String {
         switch error {
         case let .configDirectoryMissing(url):
             "Espanso config not found at \(url.path)"
         }
     }
+}
+
+private enum ReloadResult {
+    case success([EspansoMatch])
+    case failure(String)
 }
